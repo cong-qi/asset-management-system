@@ -1,0 +1,108 @@
+from django.db import models
+
+
+class AssetCategory(models.Model):
+    name = models.CharField(max_length=50, unique=True)
+
+    def __str__(self):
+        return self.name
+
+
+class AssetType(models.Model):
+    name = models.CharField(max_length=50, unique=True)
+
+    def __str__(self):
+        return self.name
+
+
+class Asset(models.Model):
+    STATUS_CHOICES = (
+        ("IN_STOCK", "在库"),
+        ("ALLOCATED", "已领用"),
+        ("MAINTENANCE", "维修"),
+        ("SCRAPPED", "已报废"),
+    )
+
+    CATEGORY_CHOICES = (
+        ("FIXED", "固定资产"),
+        ("CONSUMABLE", "低值易耗品"),
+    )
+
+    asset_code = models.CharField(
+        max_length=50, unique=True, blank=True, null=True, verbose_name="资产编号"
+    )
+
+    name = models.CharField(max_length=100, verbose_name="资产名称")
+    model = models.CharField(max_length=100, blank=True, null=True, verbose_name="型号")
+    serial_number = models.CharField(
+        max_length=100, unique=True, blank=True, null=True, verbose_name="序列号"
+    )
+    category = models.CharField(
+        max_length=20, choices=CATEGORY_CHOICES, blank=True, verbose_name="资产分类"
+    )
+    # type = models.CharField(
+    #     max_length=100, verbose_name="资产类型", blank=True, null=True
+    # )
+    type = models.ForeignKey(
+        AssetType,
+        on_delete=models.SET_NULL,
+        blank=True,
+        null=True,
+        verbose_name="资产类别",
+    )
+    purchase_price = models.DecimalField(
+        max_digits=10, decimal_places=2, verbose_name="购置价格"
+    )
+    purchase_date = models.DateField(verbose_name="购置日期")
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default="IN_STOCK",
+        verbose_name="资产状态",
+    )
+    owner = models.CharField(
+        max_length=50, blank=True, null=True, verbose_name="当前领用人"
+    )
+    location = models.CharField(
+        max_length=100, blank=True, null=True, verbose_name="存放位置"
+    )
+    vendor = models.CharField(
+        max_length=100, blank=True, null=True, verbose_name="供应商"
+    )
+
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="创建时间")
+    updated_at = models.DateTimeField(auto_now=True, verbose_name="更新时间")
+
+    def save(self, *args, **kwargs):
+        if self.purchase_price and self.purchase_price >= 5000:
+            self.category = "FIXED"
+        else:
+            self.category = "CONSUMABLE"
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"{self.asset_code} - {self.name}"
+
+
+class AssetHistory(models.Model):
+    EVENT_CHOICES = (
+        ("PURCHASE", "购置"),
+        ("LEASE", "领用"),
+        ("RETURN", "归还"),
+        ("REPAIR", "维修"),
+        ("SCRAP", "报废"),
+    )
+
+    asset = models.ForeignKey(
+        Asset, on_delete=models.CASCADE, related_name="history", verbose_name="关联资产"
+    )
+    event = models.CharField(
+        max_length=20, choices=EVENT_CHOICES, verbose_name="变更事件"
+    )
+    user = models.CharField(max_length=50, blank=True, null=True, verbose_name="操作人")
+    location = models.CharField(max_length=100, verbose_name="存放位置")
+    reason = models.TextField(blank=True, null=True, verbose_name="原因")
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="操作时间")
+
+    def __str__(self):
+        return f"{self.asset.asset_code} - {self.get_event_display()}"
