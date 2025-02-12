@@ -1,26 +1,26 @@
 from django.db import models
 
 
-class AssetCategory(models.Model):
-    name = models.CharField(max_length=50, unique=True)
+# class AssetCategory(models.Model):
+#     name = models.CharField(max_length=50, unique=True)
 
-    def __str__(self):
-        return self.name
+#     def __str__(self):
+#         return self.name
 
 
-class AssetType(models.Model):
-    name = models.CharField(max_length=50, unique=True)
+# class AssetType(models.Model):
+#     name = models.CharField(max_length=50, unique=True)
 
-    def __str__(self):
-        return self.name
+#     def __str__(self):
+#         return self.name
 
 
 class Asset(models.Model):
-    STATUS_CHOICES = (
-        ("IN_STOCK", "在库"),
-        ("ALLOCATED", "已领用"),
-        ("MAINTENANCE", "维修"),
-        ("SCRAPPED", "已报废"),
+    TYPE_CHOICES = (
+        ("COMPUTER", "计算设备"),
+        ("MONITOR", "显示器"),
+        ("KEYBOARD", "键盘"),
+        ("MOUSE", "鼠标"),
     )
 
     CATEGORY_CHOICES = (
@@ -28,29 +28,45 @@ class Asset(models.Model):
         ("CONSUMABLE", "低值易耗品"),
     )
 
+    STATUS_CHOICES = (
+        ("IN_STOCK", "在库"),
+        ("ALLOCATED", "已领用"),
+        ("MAINTENANCE", "维修"),
+        ("SCRAPPED", "已报废"),
+    )
+
     asset_code = models.CharField(
         max_length=50, unique=True, blank=True, null=True, verbose_name="资产编号"
     )
-
     name = models.CharField(max_length=100, verbose_name="资产名称")
+    type = models.CharField(
+        max_length=100,
+        choices=TYPE_CHOICES,
+        verbose_name="资产类别",
+        blank=True,
+        null=True,
+    )
+    brand = models.CharField(max_length=50, blank=True, null=True, verbose_name="品牌")
     model = models.CharField(max_length=100, blank=True, null=True, verbose_name="型号")
     serial_number = models.CharField(
         max_length=100, unique=True, blank=True, null=True, verbose_name="序列号"
     )
     category = models.CharField(
-        max_length=20, choices=CATEGORY_CHOICES, blank=True, verbose_name="资产分类"
-    )
-    # type = models.CharField(
-    #     max_length=100, verbose_name="资产类型", blank=True, null=True
-    # )
-    type = models.ForeignKey(
-        AssetType,
-        on_delete=models.SET_NULL,
+        max_length=20,
+        choices=CATEGORY_CHOICES,
         blank=True,
         null=True,
-        verbose_name="资产类别",
+        verbose_name="资产分类",
     )
-    purchase_price = models.DecimalField(
+
+    # type = models.ForeignKey(
+    #     AssetType,
+    #     on_delete=models.SET_NULL,
+    #     blank=True,
+    #     null=True,
+    #     verbose_name="资产类别",
+    # )
+    price = models.DecimalField(
         max_digits=10, decimal_places=2, verbose_name="购置价格"
     )
     purchase_date = models.DateField(verbose_name="购置日期")
@@ -66,15 +82,24 @@ class Asset(models.Model):
     location = models.CharField(
         max_length=100, blank=True, null=True, verbose_name="存放位置"
     )
-    vendor = models.CharField(
-        max_length=100, blank=True, null=True, verbose_name="供应商"
+
+    parent_asset = models.ForeignKey(
+        "self",
+        on_delete=models.SET_NULL,
+        blank=True,
+        null=True,
+        related_name="gift_assets",
+        verbose_name="赠品来源",
     )
+    # vendor = models.CharField(
+    #     max_length=100, blank=True, null=True, verbose_name="供应商"
+    # )
 
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="创建时间")
     updated_at = models.DateTimeField(auto_now=True, verbose_name="更新时间")
 
     def save(self, *args, **kwargs):
-        if self.purchase_price and self.purchase_price >= 5000:
+        if self.price and self.price >= 5000:
             self.category = "FIXED"
         else:
             self.category = "CONSUMABLE"
@@ -106,3 +131,24 @@ class AssetHistory(models.Model):
 
     def __str__(self):
         return f"{self.asset.asset_code} - {self.get_event_display()}"
+
+
+# class ComputerDetails(models.Model):
+#     asset = models.OneToOneField(
+#         Asset, on_delete=models.CASCADE, related_name="computer_details"
+#     )
+#     cpu = models.CharField(max_length=100, blank=True, null=True, verbose_name="CPU")
+#     ram = models.CharField(max_length=100, blank=True, null=True, verbose_name="内存")
+#     storage = models.CharField(
+#         max_length=100, blank=True, null=True, verbose_name="存储"
+#     )
+#     gpu = models.CharField(max_length=100, blank=True, null=True, verbose_name="显卡")
+
+#     def __str__(self):
+#         return f"{self.asset.asset_code} - {self.cpu}, {self.ram}, {self.storage}"
+
+
+# class PeripheralDetails(models.Model):
+#     asset = models.OneToOneField(
+#         Asset, on_delete=models.CASCADE, related_name="peripheral_details"
+#     )
