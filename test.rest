@@ -1,0 +1,11 @@
+GET http://127.0.0.1:8000/api/assets/
+
+###
+POST http://127.0.0.1:8000/api/assets/
+Content-Type: application/json
+
+{
+    "name":"THINKPAD P15V",
+    "price":9701.98,
+    "purchase_date":"2022-01-28"
+}

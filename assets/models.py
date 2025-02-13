@@ -18,6 +18,8 @@ from django.db import models
 class Asset(models.Model):
     TYPE_CHOICES = (
         ("COMPUTER", "计算设备"),
+        ("CAMERA", "相机"),
+        ("LENS", "镜头"),
         ("MONITOR", "显示器"),
         ("KEYBOARD", "键盘"),
         ("MOUSE", "鼠标"),
@@ -111,8 +113,10 @@ class Asset(models.Model):
 
 class AssetHistory(models.Model):
     EVENT_CHOICES = (
+        ("ADDED", "录入"),
         ("PURCHASE", "购置"),
-        ("LEASE", "领用"),
+        ("TRANSFERRED", "调拨"),
+        ("LEASED", "领用"),
         ("RETURN", "归还"),
         ("REPAIR", "维修"),
         ("SCRAP", "报废"),
@@ -124,10 +128,36 @@ class AssetHistory(models.Model):
     event = models.CharField(
         max_length=20, choices=EVENT_CHOICES, verbose_name="变更事件"
     )
-    user = models.CharField(max_length=50, blank=True, null=True, verbose_name="操作人")
-    location = models.CharField(max_length=100, verbose_name="存放位置")
+    previous_status = models.CharField(
+        max_length=20, choices=Asset.STATUS_CHOICES, verbose_name="原状态"
+    )
+    new_status = models.CharField(
+        max_length=20, choices=Asset.STATUS_CHOICES, verbose_name="新状态"
+    )
+    previous_owner = models.CharField(
+        max_length=50, blank=True, null=True, verbose_name="原领用人"
+    )
+    new_owner = models.CharField(
+        max_length=50, blank=True, null=True, verbose_name="新领用人"
+    )
+    previous_location = models.CharField(
+        max_length=100, blank=True, null=True, verbose_name="原存放位置"
+    )
+    new_location = models.CharField(
+        max_length=100, blank=True, null=True, verbose_name="新存放位置"
+    )
+    previous_price = models.DecimalField(
+        max_digits=10, decimal_places=2, blank=True, null=True, verbose_name="原价格"
+    )
+
+    new_price = models.DecimalField(
+        max_digits=10, decimal_places=2, blank=True, null=True, verbose_name="新价格"
+    )
+
+    operator = models.CharField(max_length=50, verbose_name="操作人")
+
     reason = models.TextField(blank=True, null=True, verbose_name="原因")
-    created_at = models.DateTimeField(auto_now_add=True, verbose_name="操作时间")
+    operated_at = models.DateTimeField(auto_now_add=True, verbose_name="操作时间")
 
     def __str__(self):
         return f"{self.asset.asset_code} - {self.get_event_display()}"

@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     # 第三方 apps
     "rest_framework",
+    "import_export",
     # 自定义 apps
     "assets",
 ]
