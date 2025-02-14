@@ -1,7 +1,7 @@
 from rest_framework import viewsets, status
 from rest_framework.response import Response
-from .models import Asset, AssetHistory
-from .serializers import AssetSerializer, AssetHistorySerializer
+from .models import Asset, AssetLog
+from .serializers import AssetSerializer, AssetLogSerializer
 
 
 class AssetViewSet(viewsets.ModelViewSet):
@@ -15,6 +15,6 @@ class AssetViewSet(viewsets.ModelViewSet):
         return serializer.save()
 
 
-class AssetHistoryViewSet(viewsets.ModelViewSet):
-    queryset = AssetHistory.objects.all()
-    serializer_class = AssetHistorySerializer
+class AssetLogViewSet(viewsets.ModelViewSet):
+    queryset = AssetLog.objects.all()
+    serializer_class = AssetLogSerializer
